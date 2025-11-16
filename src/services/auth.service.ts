@@ -3,7 +3,7 @@
  * Maneja todo lo relacionado con autenticación y autorización
  */
 
-import { supabase } from '../lib/supabaseClient';
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
 export interface RegisterData {
   email: string;
@@ -30,6 +30,13 @@ class AuthService {
    * Registrar nuevo usuario
    */
   async register({ email, password, fullName }: RegisterData) {
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        success: false,
+        error: 'Supabase no está configurado',
+      };
+    }
+
     try {
       // 1. Crear usuario en Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -64,6 +71,13 @@ class AuthService {
    * Iniciar sesión
    */
   async login({ email, password }: LoginData) {
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        success: false,
+        error: 'Supabase no está configurado',
+      };
+    }
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -94,6 +108,10 @@ class AuthService {
    * Cerrar sesión
    */
   async logout() {
+    if (!supabase || !isSupabaseConfigured) {
+      return { success: true };
+    }
+
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
@@ -112,6 +130,10 @@ class AuthService {
    * Obtener usuario actual
    */
   async getCurrentUser(): Promise<UserProfile | null> {
+    if (!supabase || !isSupabaseConfigured) {
+      return null;
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
@@ -142,6 +164,10 @@ class AuthService {
    * Obtener rol del usuario
    */
   async getUserRole(userId: string): Promise<'admin' | 'user' | null> {
+    if (!supabase || !isSupabaseConfigured) {
+      return null;
+    }
+
     try {
       const { data } = await supabase
         .from('users')
@@ -171,6 +197,13 @@ class AuthService {
     fullName?: string;
     avatarUrl?: string;
   }) {
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        success: false,
+        error: 'Supabase no está configurado',
+      };
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No hay sesión activa');
@@ -199,6 +232,13 @@ class AuthService {
    * Cambiar contraseña
    */
   async changePassword(newPassword: string) {
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        success: false,
+        error: 'Supabase no está configurado',
+      };
+    }
+
     try {
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
@@ -223,6 +263,13 @@ class AuthService {
    * Recuperar contraseña
    */
   async resetPassword(email: string) {
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        success: false,
+        error: 'Supabase no está configurado',
+      };
+    }
+
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
@@ -247,6 +294,10 @@ class AuthService {
    * Verificar sesión activa
    */
   async hasActiveSession(): Promise<boolean> {
+    if (!supabase || !isSupabaseConfigured) {
+      return false;
+    }
+
     const { data } = await supabase.auth.getSession();
     return !!data.session;
   }
@@ -255,6 +306,10 @@ class AuthService {
    * Suscribirse a cambios de autenticación
    */
   onAuthStateChange(callback: (event: string, session: any) => void) {
+    if (!supabase || !isSupabaseConfigured) {
+      return { data: { subscription: { unsubscribe: () => {} } } };
+    }
+
     return supabase.auth.onAuthStateChange(callback);
   }
 }

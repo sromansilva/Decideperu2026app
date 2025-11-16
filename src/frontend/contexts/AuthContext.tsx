@@ -21,6 +21,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginAsGuest: () => Promise<void>;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
   hasCompletedTutorial: boolean;
@@ -75,6 +76,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('decideperu_user', JSON.stringify(mockUser));
   };
 
+  const loginAsGuest = async () => {
+    // Simular delay de red
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    const mockUser: User = {
+      id: Math.random().toString(36),
+      name: 'Invitado',
+      email: 'invitado@decideperu.com',
+      dni: '00000000',
+      avatar: '',
+      role: 'user',
+      votingStatus: 'pendiente',
+      phone: '+51 999 888 777',
+      address: 'Lima, Perú',
+      votingLocation: undefined,
+      votingTable: undefined,
+    };
+
+    setUser(mockUser);
+    localStorage.setItem('decideperu_user', JSON.stringify(mockUser));
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('decideperu_user');
@@ -101,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
         login,
+        loginAsGuest,
         logout,
         updateUser,
         hasCompletedTutorial,

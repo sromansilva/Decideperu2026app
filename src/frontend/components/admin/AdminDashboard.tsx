@@ -82,14 +82,33 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <div className="bg-gradient-to-br from-primary via-primary-dark to-primary-dark text-white px-6 py-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
-            <Shield className="w-6 h-6" />
+      <div className="bg-gradient-to-br from-yellow-600 via-orange-600 to-red-600 text-white px-6 py-8 relative overflow-hidden">
+        {/* Decorative background pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-40 h-40 bg-white rounded-full -translate-x-1/2 -translate-y-1/2" />
+          <div className="absolute bottom-0 right-0 w-32 h-32 bg-white rounded-full translate-x-1/2 translate-y-1/2" />
+        </div>
+        
+        <div className="relative">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-sm border border-white/30">
+              <Shield className="w-7 h-7" />
+            </div>
+            <div>
+              <h1 className="text-white text-2xl">Panel Administrativo</h1>
+              <p className="text-white/90 text-sm">Control y gestión del sistema</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-white text-xl">Panel de Administración</h1>
-            <p className="text-white/70 text-xs">Control total del sistema</p>
+          
+          <div className="flex items-center gap-2 mt-4">
+            <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-white/30">
+              <Activity className="w-4 h-4" />
+              <span className="text-xs font-medium">Sistema Activo</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-green-500/30 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-green-400/30">
+              <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse" />
+              <span className="text-xs font-medium">En Línea</span>
+            </div>
           </div>
         </div>
       </div>

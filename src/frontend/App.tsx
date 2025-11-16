@@ -4,11 +4,12 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginScreen } from './components/LoginScreen';
 import { ProfileScreen } from './components/ProfileScreen';
 import { HomeScreen } from './components/HomeScreen';
+import { AdminHomeScreen } from './components/AdminHomeScreen';
 import { CalendarScreen } from '../components/CalendarScreen';
 import { CandidatesScreenImproved as CandidatesScreen } from '../components/CandidatesScreenImproved';
 import { CandidateProfile } from '../components/CandidateProfile';
 import { GovernmentPlan } from '../components/GovernmentPlan';
-import { VoterInfoScreen } from '../components/VoterInfoScreen';
+import { VoterInfoScreen } from './components/VoterInfoScreen';
 import { PollWorkersScreen } from '../components/PollWorkersScreen';
 import { NewsScreen } from '../components/NewsScreen';
 import { NewsDetail } from '../components/NewsDetail';
@@ -78,7 +79,7 @@ const tutorialSteps = [
 ];
 
 function AppContent() {
-  const { isAuthenticated, hasCompletedTutorial, completeTutorial } = useAuth();
+  const { isAuthenticated, hasCompletedTutorial, completeTutorial, isAdmin } = useAuth();
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
   const [selectedNews, setSelectedNews] = useState<any>(null);
@@ -136,7 +137,10 @@ function AppContent() {
   const renderScreen = () => {
     switch (currentScreen) {
       case 'home':
-        return (
+        // Si es admin, mostrar AdminHomeScreen, si no, HomeScreen normal
+        return isAdmin ? (
+          <AdminHomeScreen onNavigate={setCurrentScreen} />
+        ) : (
           <HomeScreen 
             onNavigate={setCurrentScreen} 
             onShowTutorial={handleShowTutorial}
@@ -212,7 +216,9 @@ function AppContent() {
       case 'admin-reniec':
         return <ReniecConsult onBack={() => setCurrentScreen('admin-dashboard')} />;
       default:
-        return (
+        return isAdmin ? (
+          <AdminHomeScreen onNavigate={setCurrentScreen} />
+        ) : (
           <HomeScreen 
             onNavigate={setCurrentScreen} 
             onShowTutorial={handleShowTutorial}

@@ -1,20 +1,23 @@
 import { useState } from 'react';
-import { ArrowLeft, Plus, Search, Edit, Trash2, Eye, Filter, X, Save } from 'lucide-react';
+import { ArrowLeft, Plus, Search, Edit, Trash2, Eye, Filter, X, Save, Upload, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SearchBar } from '../../../components/SearchBar';
 import { FilterPanel, type FilterGroup } from '../../../components/FilterPanel';
 import { Dialog } from '../../../components/ui/dialog';
 import { Badge } from '../../../components/ui/badge';
+import { useAdminCandidates } from '../../../hooks/useCandidates';
+import { toast } from 'sonner@2.0.3';
 
 interface Candidate {
-  id: number;
+  id: string;
   name: string;
   party: string;
-  shortParty: string;
-  position: string;
+  short_party: string;
+  position: 'Presidencial' | 'Congreso' | 'Parlamento Andino';
   region: string;
-  image: string;
-  proposals: number;
+  photo_url: string | null;
+  proposals: string | null;
+  bio: string | null;
   status: 'active' | 'pending' | 'rejected';
 }
 
@@ -22,50 +25,55 @@ interface CandidateManagementProps {
   onBack: () => void;
 }
 
+interface FormData {
+  name: string;
+  party: string;
+  shortParty: string;
+  position: 'Presidencial' | 'Congreso' | 'Parlamento Andino' | '';
+  region: string;
+  proposals: string;
+  bio: string;
+  facebook: string;
+  twitter: string;
+  instagram: string;
+  status: 'active' | 'pending' | 'rejected';
+}
+
 export function CandidateManagement({ onBack }: CandidateManagementProps) {
   const [view, setView] = useState<'list' | 'create' | 'edit' | 'detail'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
-  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [selectedCandidate, setSelectedCandidate] = useState<any | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Form state
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    party: '',
+    shortParty: '',
+    position: '',
+    region: '',
+    proposals: '',
+    bio: '',
+    facebook: '',
+    twitter: '',
+    instagram: '',
+    status: 'pending',
+  });
 
-  // Mock data
-  const [candidates, setCandidates] = useState<Candidate[]>([
-    {
-      id: 1,
-      name: 'Ana María Torres',
-      party: 'Partido Democrático Nacional',
-      shortParty: 'PDN',
-      position: 'Presidencial',
-      region: 'Lima',
-      image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop',
-      proposals: 45,
-      status: 'active',
-    },
-    {
-      id: 2,
-      name: 'Carlos Mendoza Silva',
-      party: 'Alianza por el Progreso',
-      shortParty: 'APP',
-      position: 'Congreso',
-      region: 'La Libertad',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop',
-      proposals: 38,
-      status: 'active',
-    },
-    {
-      id: 3,
-      name: 'María Elena Vega',
-      party: 'Frente Renovador',
-      shortParty: 'FR',
-      position: 'Presidencial',
-      region: 'Arequipa',
-      image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop',
-      proposals: 42,
-      status: 'pending',
-    },
-  ]);
+  // Supabase hooks
+  const {
+    candidates,
+    loading,
+    createCandidate,
+    updateCandidate,
+    deleteCandidate,
+    refreshCandidates,
+  } = useAdminCandidates();
 
   const filterGroups: FilterGroup[] = [
     {
@@ -122,9 +130,150 @@ export function CandidateManagement({ onBack }: CandidateManagementProps) {
     });
   };
 
-  const handleDeleteCandidate = (id: number) => {
-    setCandidates(prev => prev.filter(c => c.id !== id));
+  const handleDeleteCandidate = async (id: string) => {
+    const result = await deleteCandidate(id);
+    if (result.success) {
+      toast.success('Candidato eliminado exitosamente');
+    } else {
+      toast.error(result.error || 'Error al eliminar candidato');
+    }
     setShowDeleteDialog(false);
+  };
+
+  const handleSaveCandidate = async () => {
+    // Validación
+    if (!formData.name || !formData.party || !formData.shortParty || !formData.position || !formData.region) {
+      toast.error('Por favor completa todos los campos obligatorios');
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      if (view === 'create') {
+        const result = await createCandidate({
+          name: formData.name,
+          party: formData.party,
+          shortParty: formData.shortParty,
+          position: formData.position as 'Presidencial' | 'Congreso' | 'Parlamento Andino',
+          region: formData.region,
+          photoFile: photoFile || undefined,
+          bio: formData.bio || undefined,
+          planResumen: formData.proposals || undefined,
+          proposals: formData.proposals || undefined,
+          socialMedia: {
+            facebook: formData.facebook || undefined,
+            twitter: formData.twitter || undefined,
+            instagram: formData.instagram || undefined,
+          },
+          status: formData.status,
+        });
+
+        if (result.success) {
+          toast.success('¡Candidato creado exitosamente! 🎉');
+          // Reset form
+          setFormData({
+            name: '',
+            party: '',
+            shortParty: '',
+            position: '',
+            region: '',
+            proposals: '',
+            bio: '',
+            facebook: '',
+            twitter: '',
+            instagram: '',
+            status: 'pending',
+          });
+          setPhotoFile(null);
+          setPhotoPreview(null);
+          setView('list');
+        } else {
+          toast.error(result.error || 'Error al crear candidato');
+        }
+      } else {
+        const result = await updateCandidate(selectedCandidate.id, {
+          name: formData.name,
+          party: formData.party,
+          shortParty: formData.shortParty,
+          position: formData.position as 'Presidencial' | 'Congreso' | 'Parlamento Andino',
+          region: formData.region,
+          photoFile: photoFile || undefined,
+          bio: formData.bio || undefined,
+          planResumen: formData.proposals || undefined,
+          proposals: formData.proposals || undefined,
+          socialMedia: {
+            facebook: formData.facebook || undefined,
+            twitter: formData.twitter || undefined,
+            instagram: formData.instagram || undefined,
+          },
+          status: formData.status,
+        });
+
+        if (result.success) {
+          toast.success('¡Candidato actualizado exitosamente! ✅');
+          setView('list');
+        } else {
+          toast.error(result.error || 'Error al actualizar candidato');
+        }
+      }
+    } catch (error) {
+      toast.error('Error inesperado al guardar candidato');
+      console.error('Error:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleOpenCreate = () => {
+    // Reset form data
+    setFormData({
+      name: '',
+      party: '',
+      shortParty: '',
+      position: '',
+      region: '',
+      proposals: '',
+      bio: '',
+      facebook: '',
+      twitter: '',
+      instagram: '',
+      status: 'pending',
+    });
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setView('create');
+  };
+
+  const handleOpenEdit = (candidate: any) => {
+    setSelectedCandidate(candidate);
+    setFormData({
+      name: candidate.name || '',
+      party: candidate.party || '',
+      shortParty: candidate.short_party || '',
+      position: candidate.position || '',
+      region: candidate.region || '',
+      proposals: candidate.proposals || '',
+      bio: candidate.bio || '',
+      facebook: candidate.social_media?.facebook || '',
+      twitter: candidate.social_media?.twitter || '',
+      instagram: candidate.social_media?.instagram || '',
+      status: candidate.status || 'pending',
+    });
+    setPhotoPreview(candidate.photo_url);
+    setView('edit');
   };
 
   const getStatusColor = (status: string) => {
@@ -171,11 +320,21 @@ export function CandidateManagement({ onBack }: CandidateManagementProps) {
         {/* Add Button */}
         <div className="px-6 mb-4">
           <button
-            onClick={() => setView('create')}
-            className="w-full py-3 bg-primary text-primary-foreground rounded-xl hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 font-medium"
+            onClick={handleOpenCreate}
+            disabled={loading}
+            className="w-full py-3 bg-primary text-primary-foreground rounded-xl hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Plus className="w-5 h-5" />
-            Agregar Nuevo Candidato
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Cargando...
+              </>
+            ) : (
+              <>
+                <Plus className="w-5 h-5" />
+                Agregar Nuevo Candidato
+              </>
+            )}
           </button>
         </div>
 
@@ -217,7 +376,7 @@ export function CandidateManagement({ onBack }: CandidateManagementProps) {
               >
                 <div className="flex items-start gap-3 mb-3">
                   <img
-                    src={candidate.image}
+                    src={candidate.photo_url || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop'}
                     alt={candidate.name}
                     className="w-14 h-14 rounded-full object-cover flex-shrink-0"
                   />
@@ -234,7 +393,7 @@ export function CandidateManagement({ onBack }: CandidateManagementProps) {
                       <span>•</span>
                       <span>{candidate.region}</span>
                       <span>•</span>
-                      <span>{candidate.proposals} propuestas</span>
+                      <span>{candidate.proposals ? 'Con propuestas' : 'Sin propuestas'}</span>
                     </div>
                   </div>
                 </div>
@@ -252,10 +411,7 @@ export function CandidateManagement({ onBack }: CandidateManagementProps) {
                     Ver
                   </button>
                   <button
-                    onClick={() => {
-                      setSelectedCandidate(candidate);
-                      setView('edit');
-                    }}
+                    onClick={() => handleOpenEdit(candidate)}
                     className="flex-1 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors flex items-center justify-center gap-2 text-xs"
                   >
                     <Edit className="w-3.5 h-3.5" />
@@ -357,6 +513,7 @@ export function CandidateManagement({ onBack }: CandidateManagementProps) {
               placeholder="Ej: Juan Pérez García"
               defaultValue={view === 'edit' ? selectedCandidate?.name : ''}
               className="w-full px-4 py-3 bg-input-background border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
 
@@ -383,6 +540,7 @@ export function CandidateManagement({ onBack }: CandidateManagementProps) {
               placeholder="Ej: Partido Democrático Nacional"
               defaultValue={view === 'edit' ? selectedCandidate?.party : ''}
               className="w-full px-4 py-3 bg-input-background border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              onChange={(e) => setFormData({ ...formData, party: e.target.value })}
             />
           </div>
 
@@ -391,8 +549,9 @@ export function CandidateManagement({ onBack }: CandidateManagementProps) {
             <input
               type="text"
               placeholder="Ej: PDN"
-              defaultValue={view === 'edit' ? selectedCandidate?.shortParty : ''}
+              defaultValue={view === 'edit' ? selectedCandidate?.short_party : ''}
               className="w-full px-4 py-3 bg-input-background border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              onChange={(e) => setFormData({ ...formData, shortParty: e.target.value })}
             />
           </div>
 
@@ -401,6 +560,7 @@ export function CandidateManagement({ onBack }: CandidateManagementProps) {
             <select
               defaultValue={view === 'edit' ? selectedCandidate?.position : ''}
               className="w-full px-4 py-3 bg-input-background border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              onChange={(e) => setFormData({ ...formData, position: e.target.value as 'Presidencial' | 'Congreso' | 'Parlamento Andino' | '' })}
             >
               <option value="">Seleccionar cargo</option>
               <option value="Presidencial">Presidencial</option>
@@ -414,6 +574,7 @@ export function CandidateManagement({ onBack }: CandidateManagementProps) {
             <select
               defaultValue={view === 'edit' ? selectedCandidate?.region : ''}
               className="w-full px-4 py-3 bg-input-background border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              onChange={(e) => setFormData({ ...formData, region: e.target.value })}
             >
               <option value="">Seleccionar región</option>
               <option value="Lima">Lima</option>
@@ -429,6 +590,7 @@ export function CandidateManagement({ onBack }: CandidateManagementProps) {
               rows={4}
               placeholder="Describe las principales propuestas del candidato..."
               className="w-full px-4 py-3 bg-input-background border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              onChange={(e) => setFormData({ ...formData, proposals: e.target.value })}
             />
           </div>
 
@@ -438,6 +600,7 @@ export function CandidateManagement({ onBack }: CandidateManagementProps) {
               rows={4}
               placeholder="Experiencia profesional, estudios, cargos previos..."
               className="w-full px-4 py-3 bg-input-background border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
             />
           </div>
 
@@ -448,16 +611,19 @@ export function CandidateManagement({ onBack }: CandidateManagementProps) {
                 type="url"
                 placeholder="Facebook (URL completa)"
                 className="w-full px-4 py-2.5 bg-input-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
               />
               <input
                 type="url"
                 placeholder="Twitter/X (URL completa)"
                 className="w-full px-4 py-2.5 bg-input-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                onChange={(e) => setFormData({ ...formData, twitter: e.target.value })}
               />
               <input
                 type="url"
                 placeholder="Instagram (URL completa)"
                 className="w-full px-4 py-2.5 bg-input-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
               />
             </div>
           </div>
@@ -467,6 +633,7 @@ export function CandidateManagement({ onBack }: CandidateManagementProps) {
             <select
               defaultValue={view === 'edit' ? selectedCandidate?.status : 'pending'}
               className="w-full px-4 py-3 bg-input-background border border-border rounded-xl text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'pending' | 'rejected' })}
             >
               <option value="active">Activo</option>
               <option value="pending">Pendiente de Aprobación</option>
@@ -478,16 +645,27 @@ export function CandidateManagement({ onBack }: CandidateManagementProps) {
           <div className="flex gap-3 pt-4">
             <button
               onClick={() => setView('list')}
-              className="flex-1 py-3 bg-muted hover:bg-muted/80 rounded-xl transition-colors text-sm"
+              disabled={isSaving}
+              className="flex-1 py-3 bg-muted hover:bg-muted/80 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancelar
             </button>
             <button
-              onClick={() => setView('list')}
-              className="flex-1 py-3 bg-primary hover:bg-primary-dark text-primary-foreground rounded-xl transition-colors text-sm flex items-center justify-center gap-2 font-medium"
+              onClick={handleSaveCandidate}
+              disabled={isSaving}
+              className="flex-1 py-3 bg-primary hover:bg-primary-dark text-primary-foreground rounded-xl transition-colors text-sm flex items-center justify-center gap-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Save className="w-4 h-4" />
-              {view === 'create' ? 'Crear' : 'Guardar'}
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  {view === 'create' ? 'Crear Candidato' : 'Guardar Cambios'}
+                </>
+              )}
             </button>
           </div>
         </div>

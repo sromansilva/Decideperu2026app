@@ -3,7 +3,7 @@
  * Gestión completa de candidatos con Supabase
  */
 
-import { supabase } from '../lib/supabaseClient';
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { Database } from '../lib/database.types';
 
 type Candidate = Database['public']['Tables']['candidates']['Row'];
@@ -34,6 +34,14 @@ class CandidatesService {
    * Obtener todos los candidatos activos (público)
    */
   async getAllActive() {
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        success: false,
+        error: 'Supabase no está configurado',
+        data: [],
+      };
+    }
+
     try {
       const { data, error } = await supabase
         .from('candidates')
@@ -61,6 +69,14 @@ class CandidatesService {
    * Obtener todos los candidatos (admin)
    */
   async getAll() {
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        success: false,
+        error: 'Supabase no está configurado',
+        data: [],
+      };
+    }
+
     try {
       const { data, error } = await supabase
         .from('candidates')
@@ -87,6 +103,14 @@ class CandidatesService {
    * Obtener candidato por ID
    */
   async getById(id: string) {
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        success: false,
+        error: 'Supabase no está configurado',
+        data: null,
+      };
+    }
+
     try {
       const { data, error } = await supabase
         .from('candidates')
@@ -114,6 +138,14 @@ class CandidatesService {
    * Filtrar candidatos por posición
    */
   async getByPosition(position: string) {
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        success: false,
+        error: 'Supabase no está configurado',
+        data: [],
+      };
+    }
+
     try {
       const { data, error } = await supabase
         .from('candidates')
@@ -142,6 +174,14 @@ class CandidatesService {
    * Filtrar candidatos por región
    */
   async getByRegion(region: string) {
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        success: false,
+        error: 'Supabase no está configurado',
+        data: [],
+      };
+    }
+
     try {
       const { data, error } = await supabase
         .from('candidates')
@@ -170,6 +210,14 @@ class CandidatesService {
    * Crear nuevo candidato (admin)
    */
   async create(candidateData: CreateCandidateData) {
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        success: false,
+        error: 'Supabase no está configurado',
+        data: null,
+      };
+    }
+
     try {
       // 1. Subir foto si existe
       let photoUrl = null;
@@ -227,6 +275,14 @@ class CandidatesService {
    * Actualizar candidato (admin)
    */
   async update(id: string, updates: Partial<CreateCandidateData>) {
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        success: false,
+        error: 'Supabase no está configurado',
+        data: null,
+      };
+    }
+
     try {
       // 1. Subir nueva foto si existe
       let photoUrl = undefined;
@@ -281,6 +337,13 @@ class CandidatesService {
    * Eliminar candidato (admin)
    */
   async delete(id: string) {
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        success: false,
+        error: 'Supabase no está configurado',
+      };
+    }
+
     try {
       // 1. Obtener foto para eliminarla
       const { data: candidate } = await supabase
@@ -319,6 +382,14 @@ class CandidatesService {
    * Subir foto de candidato a Storage
    */
   async uploadPhoto(file: File) {
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        success: false,
+        error: 'Supabase no está configurado',
+        url: null,
+      };
+    }
+
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
@@ -357,6 +428,10 @@ class CandidatesService {
    * Eliminar foto de candidato
    */
   async deletePhoto(photoUrl: string) {
+    if (!supabase || !isSupabaseConfigured) {
+      return { success: false, error: 'Supabase no está configurado' };
+    }
+
     try {
       // Extraer path de la URL
       const urlParts = photoUrl.split('/candidate-photos/');
@@ -381,6 +456,13 @@ class CandidatesService {
    * Cambiar estado del candidato (admin)
    */
   async changeStatus(id: string, status: 'active' | 'pending' | 'rejected') {
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        success: false,
+        error: 'Supabase no está configurado',
+      };
+    }
+
     try {
       const { data, error } = await supabase
         .from('candidates')
@@ -409,6 +491,14 @@ class CandidatesService {
    * Buscar candidatos por nombre
    */
   async search(query: string) {
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        success: false,
+        error: 'Supabase no está configurado',
+        data: [],
+      };
+    }
+
     try {
       const { data, error } = await supabase
         .from('candidates')
@@ -437,6 +527,13 @@ class CandidatesService {
    * Obtener estadísticas de candidatos (admin)
    */
   async getStats() {
+    if (!supabase || !isSupabaseConfigured) {
+      return {
+        success: false,
+        error: 'Supabase no está configurado',
+      };
+    }
+
     try {
       const { data: all } = await supabase
         .from('candidates')

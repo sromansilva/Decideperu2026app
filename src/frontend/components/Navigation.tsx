@@ -1,5 +1,6 @@
-import { Home, Calendar, Users, UserCircle } from 'lucide-react';
+import { Home, Calendar, Users, UserCircle, Shield, BarChart3 } from 'lucide-react';
 import type { Screen } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 interface NavigationProps {
   currentScreen: Screen;
@@ -7,12 +8,22 @@ interface NavigationProps {
 }
 
 export function Navigation({ currentScreen, onNavigate }: NavigationProps) {
-  const navItems = [
-    { id: 'home' as Screen, label: 'Inicio', icon: Home },
-    { id: 'calendar' as Screen, label: 'Calendario', icon: Calendar },
-    { id: 'candidates' as Screen, label: 'Candidatos', icon: Users },
-    { id: 'profile' as Screen, label: 'Perfil', icon: UserCircle },
-  ];
+  const { isAdmin } = useAuth();
+
+  // Navegación dinámica según el rol
+  const navItems = isAdmin 
+    ? [
+        { id: 'home' as Screen, label: 'Inicio', icon: Shield },
+        { id: 'admin-stats' as Screen, label: 'Stats', icon: BarChart3 },
+        { id: 'candidates' as Screen, label: 'Gestión', icon: Users },
+        { id: 'profile' as Screen, label: 'Perfil', icon: UserCircle },
+      ]
+    : [
+        { id: 'home' as Screen, label: 'Inicio', icon: Home },
+        { id: 'calendar' as Screen, label: 'Calendario', icon: Calendar },
+        { id: 'candidates' as Screen, label: 'Candidatos', icon: Users },
+        { id: 'profile' as Screen, label: 'Perfil', icon: UserCircle },
+      ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg max-w-md mx-auto z-50">
@@ -21,7 +32,7 @@ export function Navigation({ currentScreen, onNavigate }: NavigationProps) {
           const Icon = item.icon;
           const isActive = currentScreen === item.id || 
             (item.id === 'candidates' && (currentScreen === 'candidate-profile' || currentScreen === 'government-plan')) ||
-            (item.id === 'home' && (currentScreen === 'news' || currentScreen === 'news-detail' || currentScreen === 'voter-info' || currentScreen === 'poll-workers'));
+            (item.id === 'home' && (currentScreen === 'news' || currentScreen === 'news-detail' || currentScreen === 'voter-info' || currentScreen === 'poll-workers' || currentScreen.startsWith('admin-')));
           
           return (
             <button
