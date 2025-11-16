@@ -17,6 +17,14 @@ import { Tutorial } from './components/Tutorial';
 import { AdminIndicator } from './components/AdminIndicator';
 import { NotificationsPanel } from '../components/NotificationsPanel';
 import { EventDetailModal } from '../components/EventDetailModal';
+// Admin Components
+import { AdminDashboard } from './components/admin/AdminDashboard';
+import { CandidateManagement } from './components/admin/CandidateManagement';
+import { NewsManagement } from './components/admin/NewsManagement';
+import { EventManagement } from './components/admin/EventManagement';
+import { StatsPanel } from './components/admin/StatsPanel';
+import { NotificationSender } from './components/admin/NotificationSender';
+import { ReniecConsult } from './components/admin/ReniecConsult';
 import type { Screen, Event } from './types';
 import {
   getFullDate,
@@ -188,6 +196,21 @@ function AppContent() {
             onNavigate={setCurrentScreen}
           />
         );
+      // Admin Screens
+      case 'admin-dashboard':
+        return <AdminDashboard onNavigate={setCurrentScreen} />;
+      case 'admin-candidates':
+        return <CandidateManagement onBack={() => setCurrentScreen('admin-dashboard')} />;
+      case 'admin-news':
+        return <NewsManagement onBack={() => setCurrentScreen('admin-dashboard')} />;
+      case 'admin-events':
+        return <EventManagement onBack={() => setCurrentScreen('admin-dashboard')} />;
+      case 'admin-stats':
+        return <StatsPanel onBack={() => setCurrentScreen('admin-dashboard')} />;
+      case 'admin-notifications':
+        return <NotificationSender onBack={() => setCurrentScreen('admin-dashboard')} />;
+      case 'admin-reniec':
+        return <ReniecConsult onBack={() => setCurrentScreen('admin-dashboard')} />;
       default:
         return (
           <HomeScreen 

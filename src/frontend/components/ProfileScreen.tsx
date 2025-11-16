@@ -205,42 +205,22 @@ export function ProfileScreen({ onNavigate }: ProfileScreenProps) {
         </div>
       )}
 
-      {/* Panel de administrador (solo si es admin) */}
-      {isAdmin && !isEditing && (
+      {/* Panel de Administración (solo para admin) */}
+      {isAdmin && (
         <div className="px-6 mt-6">
-          <h3 className="text-sm text-muted-foreground mb-3 px-1">Panel de Administración</h3>
-          <div className="bg-card rounded-xl border border-border overflow-hidden">
-            <MenuItem
-              icon={<Users className="w-5 h-5" />}
-              label="Gestión de Candidatos"
-              description="Administrar perfiles y propuestas"
-              onClick={() => console.log('Gestión de candidatos')}
-            />
-            <MenuItem
-              icon={<Newspaper className="w-5 h-5" />}
-              label="Gestión de Noticias"
-              description="Publicar y editar noticias"
-              onClick={() => console.log('Gestión de noticias')}
-            />
-            <MenuItem
-              icon={<Calendar className="w-5 h-5" />}
-              label="Gestión de Eventos"
-              description="Administrar calendario electoral"
-              onClick={() => console.log('Gestión de eventos')}
-            />
-            <MenuItem
-              icon={<BarChart3 className="w-5 h-5" />}
-              label="Panel de Estadísticas"
-              description="Métricas y análisis"
-              onClick={() => console.log('Estadísticas')}
-            />
-            <MenuItem
-              icon={<Send className="w-5 h-5" />}
-              label="Envío de Notificaciones"
-              description="Push y alertas masivas"
-              onClick={() => console.log('Notificaciones')}
-              showDivider={false}
-            />
+          <h3 className="text-sm text-muted-foreground mb-3 px-1 flex items-center gap-2">
+            <Crown className="w-4 h-4 text-yellow-500" />
+            Panel de Administración
+          </h3>
+          <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 rounded-xl border border-yellow-500/20 p-1">
+            <div className="bg-card rounded-lg border border-border overflow-hidden">
+              <MenuItem
+                icon={<Shield className="w-5 h-5 text-yellow-600 dark:text-yellow-500" />}
+                label="Panel Administrativo"
+                description="Acceso completo al sistema"
+                onClick={() => onNavigate?.('admin-dashboard')}
+              />
+            </div>
           </div>
         </div>
       )}
